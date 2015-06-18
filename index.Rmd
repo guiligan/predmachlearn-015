@@ -1,0 +1,155 @@
+---
+title: "Human Activity Recognition - Weight Lifting Exercises"
+author: "Guilherme Mori"
+output: html_document
+---
+
+This projected is intended to predict the manner in which people did their
+exercise according to the Weight Lifting Exercise Datase found at
+<http://groupware.les.inf.puc-rio.br/har>. The dataset is composed by 6
+participants being monitored with accelerometers on the bell, forearm, arm, and
+dumbbell perfoming exercises. Their manner of performation is classified into
+5 different classes:
+
+ - A) Exactly according to specification,
+ - B) Throwing the elbows to the front,
+ - C) Lifting the dumbbell only halfway,
+ - D) Lowering the dumbbell only halfway,
+ - E) Throwing the hips to the front.
+ 
+Class A corresponds to the specified execution, while the other 4 classes
+represents common mistakes.
+
+Before we start our analysis, we set some common seed in order to make it
+reproduciple, and load the data from source along with the required libraries.
+
+```{r, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
+set.seed(1235)
+
+library(caret)
+library(randomForest)
+url <- "pml-training.csv"
+Data <- read.csv(url)
+```
+
+## Pre-processing
+
+Since all rows are not padronized, we will remove data that are not present in
+all rows. Alaso, variables such as row numbem, timestamps and window information
+are not relevant for predicting the outcome class.
+
+```{r, cache=TRUE}
+# Remove unused data
+Data$X <- NULL
+Data$user_name <- NULL
+Data$raw_timestamp_part_1 <- NULL
+Data$raw_timestamp_part_2 <- NULL
+Data$cvtd_timestamp <- NULL
+Data$new_window <- NULL
+Data$num_window <- NULL
+
+# Complete missing data
+Data$kurtosis_roll_belt <- NULL
+Data$kurtosis_picth_belt <- NULL
+Data$kurtosis_yaw_belt <- NULL
+Data$skewness_roll_belt <- NULL
+Data$skewness_roll_belt.1 <- NULL
+Data$skewness_yaw_belt <- NULL
+Data$max_yaw_belt <- NULL
+Data$min_yaw_belt <- NULL
+Data$amplitude_yaw_belt <- NULL
+Data$kurtosis_roll_arm <- NULL
+Data$kurtosis_picth_arm <- NULL
+Data$kurtosis_yaw_arm <- NULL
+Data$skewness_roll_arm <- NULL
+Data$skewness_pitch_arm <- NULL
+Data$skewness_yaw_arm <- NULL
+Data$kurtosis_roll_dumbbell <- NULL
+Data$kurtosis_picth_dumbbell <- NULL
+Data$kurtosis_yaw_dumbbell <- NULL
+Data$skewness_roll_dumbbell <- NULL
+Data$skewness_pitch_dumbbell <- NULL
+Data$skewness_yaw_dumbbell <- NULL
+Data$max_yaw_dumbbell <- NULL
+Data$min_yaw_dumbbell <- NULL
+Data$amplitude_yaw_dumbbell <- NULL
+Data$kurtosis_roll_forearm <- NULL
+Data$kurtosis_picth_forearm <- NULL
+Data$kurtosis_yaw_forearm <- NULL
+Data$skewness_roll_forearm <- NULL
+Data$skewness_pitch_forearm <- NULL
+Data$skewness_yaw_forearm <- NULL
+Data$max_yaw_forearm <- NULL
+Data$min_yaw_forearm <- NULL
+Data$amplitude_yaw_forearm <- NULL
+
+# Remove NAs columns
+Data <- Data[,colSums(is.na(Data))==0]
+```
+
+## Data Separation
+
+Now that we have our treated data, we will separate it into training and testing
+subsets.
+
+```{r, cache=TRUE}
+inTrain <- createDataPartition(y=Data$classe, p=0.75, list=FALSE)
+training <- Data[inTrain,]
+testing <- Data[-inTrain,]
+```
+
+Training will be used to teach our model how to predict the outcome class, while
+the testing will be used as referrence for model fit.
+
+## Data Training
+
+By using the Random Forest algorithm, we will predict a model for the current
+available variables, and using the IMPORTANCE argument, which will perfome
+ramdom permutation of  the values of variables in the out-of-bag cases.
+
+```{r, cache=TRUE}
+model <- randomForest(classe ~ ., data=training, importance=TRUE, do.trace=100)
+```
+
+In random forests there is no need for cross-validation. It is estimated
+internally during the run as stated:
+
+> Each tree is constructed using a different bootstrap sample from the original
+> data. About one-third of the cases are left out of the bootstrap sample and
+> not used in the construction of the kth tree.
+>
+> Put each case left out in the construction of the kth tree down the kth tree
+> to get a classification. In this way, a test set classification is obtained
+> for each case in about one-third of the trees. At the end of the run, take j
+> to be the class that got most of the votes every time case n was oob. The
+> proportion of times that j is not equal to the true class of n averaged over
+> all cases is the oob error estimate. This has proven to be unbiased in many
+> tests.
+
+## Resulting Model
+
+Each feature is classified by the random forest algorithm accordingly to the
+below table:
+
+```{r, echo=FALSE, cache=TRUE}
+model$importance
+```
+
+Resulting in a confusion matrix as stated:
+
+```{r, echo=FALSE, cache=TRUE}
+model$confusion
+```
+
+As we can see, the model has little error rate, of about 0.37%, achieving better
+performance than the model stated by the dataset. However, to confirm that the
+model has a good fit, we will use the testing subset:
+
+```{r, echo=FALSE, cache=TRUE}
+predictions <- predict(model, newdata=testing)
+confusionMatrix(predictions, testing$classe)
+```
+
+The model has a 0.9941 accuracy, which proves that the random forest algorithm,
+with the selected features, have a very good resulting model in predicting the
+class of the performed exercise.

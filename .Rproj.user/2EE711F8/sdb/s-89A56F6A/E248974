@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1432072302789.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "E248974",
+    "lastKnownWriteTime" : 7596288818534154241,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "trainingData",
+        "contentUrl" : "content?title=trainingData&file=bc4aa7a6543647c4b3fc50fbc098a8e3.htm",
+        "displayedObservations" : 1000,
+        "displayedVariables" : 100,
+        "totalObservations" : 19622,
+        "variables" : 160
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
